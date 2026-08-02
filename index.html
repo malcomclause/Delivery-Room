@@ -1,0 +1,1574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Delivery Room — Compare & Track</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --turf-dark:#0A1220;
+    --turf-mid:#111D33;
+    --turf-mid2:#182746;
+    --chalk:#F3F6FA;
+    --chalk-dim:#8593AB;
+    --amber:#FFFFFF;
+    --amber-dim:#3E4F72;
+    --clay:#D6635F;
+    --cyan:#5FB8D6;
+    --line:#22335A;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(ellipse at 20% -10%, rgba(255,255,255,0.06), transparent 45%),
+      radial-gradient(ellipse at 90% 10%, rgba(120,160,255,0.07), transparent 40%),
+      var(--turf-dark);
+    color:var(--chalk);
+    font-family:'IBM Plex Sans', sans-serif;
+    min-height:100vh;
+  }
+  .wrap{max-width:1200px;margin:0 auto;padding:48px 24px 100px;}
+
+  .hero{padding:40px 0 40px;border-bottom:1px solid var(--line);}
+  .eyebrow{font-family:'IBM Plex Mono', monospace;letter-spacing:.18em;text-transform:uppercase;font-size:12px;color:var(--amber);margin-bottom:14px;}
+  h1{font-family:'Anton', sans-serif;font-weight:400;font-size:clamp(36px, 6vw, 64px);line-height:0.95;letter-spacing:.01em;margin:0 0 16px;text-transform:uppercase;}
+  h1 span{color:var(--amber);}
+  .sub{font-size:16px;line-height:1.6;color:var(--chalk-dim);max-width:640px;margin:0 0 8px;}
+
+  .upload-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-top:32px;}
+  @media (max-width:760px){.upload-grid{grid-template-columns:1fr;}}
+  .upload-slot{background:var(--turf-mid);border:1px solid var(--line);border-radius:10px;padding:18px;}
+  .upload-slot .slot-title{font-family:'IBM Plex Mono', monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--chalk-dim);margin-bottom:12px;}
+  .dropzone{border:2px dashed var(--line);border-radius:8px;padding:26px 16px;text-align:center;cursor:pointer;transition:border-color .2s, background .2s;background:rgba(255,255,255,0.015);}
+  .dropzone:hover, .dropzone.drag{border-color:var(--amber);background:rgba(231,163,62,0.06);}
+  .dropzone .dz-label{font-family:'IBM Plex Mono', monospace;font-size:13px;color:var(--chalk);margin-bottom:5px;}
+  .dropzone .dz-sub{font-size:12px;color:var(--chalk-dim);}
+  .dropzone.has-file{border-style:solid;border-color:var(--amber);}
+  input[type=file]{display:none;}
+
+  .handedness{margin-top:14px;display:flex;gap:10px;align-items:center;font-size:12.5px;color:var(--chalk-dim);}
+  .toggle-group{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;}
+  .toggle-btn{font-family:'IBM Plex Mono', monospace;font-size:11.5px;padding:7px 12px;background:transparent;color:var(--chalk-dim);border:none;cursor:pointer;}
+  .toggle-btn.active{background:var(--amber);color:var(--turf-dark);font-weight:600;}
+  .clear-slot{margin-top:10px;font-size:11.5px;color:var(--chalk-dim);background:none;border:none;text-decoration:underline;cursor:pointer;padding:0;}
+  .clear-slot:hover{color:var(--amber);}
+
+  .analyze-row{margin-top:22px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+  .btn{font-family:'IBM Plex Mono', monospace;font-size:13px;letter-spacing:.02em;padding:10px 18px;border-radius:6px;border:1px solid var(--amber);background:var(--amber);color:var(--turf-dark);font-weight:600;cursor:pointer;transition:opacity .15s;}
+  .btn:hover{opacity:.88;}
+  .btn:disabled{opacity:.35;cursor:not-allowed;}
+  .btn.ghost{background:transparent;color:var(--chalk);border-color:var(--line);}
+  .btn.ghost:hover{border-color:var(--amber);color:var(--amber);}
+  .btn.small{padding:7px 12px;font-size:11px;}
+  .status{font-family:'IBM Plex Mono', monospace;font-size:12px;color:var(--chalk-dim);}
+  .status.active{color:var(--amber);}
+
+  .video-grid{display:none;margin-top:32px;grid-template-columns:1fr 1fr;gap:20px;}
+  .video-grid.show{display:grid;}
+  .video-grid.single{grid-template-columns:1fr;max-width:600px;}
+  @media (max-width:760px){.video-grid{grid-template-columns:1fr;}}
+  .video-panel{background:var(--turf-mid);border:1px solid var(--line);border-radius:10px;padding:14px;}
+  .video-panel .panel-label{font-family:'IBM Plex Mono', monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--chalk-dim);margin-bottom:10px;}
+  .stage{position:relative;width:100%;background:#000;border-radius:6px;overflow:hidden;}
+  .stage video, .stage canvas{position:absolute;top:0;left:0;width:100%;height:100%;display:block;}
+  .stage video{position:relative;}
+  .stage canvas{pointer-events:none;}
+  .transport{margin-top:10px;display:flex;align-items:center;gap:8px;}
+  .transport input[type=range]{flex:1;accent-color:var(--amber);}
+  .transport .time{font-family:'IBM Plex Mono', monospace;font-size:11px;color:var(--chalk-dim);min-width:70px;text-align:right;}
+
+  .section-title{font-family:'Anton', sans-serif;text-transform:uppercase;font-size:24px;letter-spacing:.01em;margin:52px 0 6px;}
+  .section-desc{color:var(--chalk-dim);font-size:14px;margin-bottom:18px;max-width:680px;}
+
+  /* LOG & HISTORY */
+  .log-card, .history-card{background:var(--turf-mid);border:1px solid var(--line);border-radius:10px;padding:18px;margin-top:22px;}
+  .log-card .lc-title, .history-card .lc-title{font-family:'IBM Plex Mono', monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--chalk-dim);margin-bottom:12px;}
+  .log-fields{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;}
+  .log-field{display:flex;flex-direction:column;gap:5px;}
+  .log-field label{font-family:'IBM Plex Mono', monospace;font-size:10.5px;color:var(--chalk-dim);text-transform:uppercase;}
+  .log-field input, .log-field select{background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:6px;color:var(--chalk);font-family:'IBM Plex Sans',sans-serif;font-size:13px;padding:8px 10px;}
+  .log-field.notes{flex:1;min-width:180px;}
+  .log-field.pitches input{width:80px;}
+  .log-field.date input{width:140px;}
+  .log-save-row{margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .log-save-note{font-size:11.5px;color:var(--chalk-dim);}
+
+  .log-table{display:flex;flex-direction:column;gap:2px;}
+  .log-row{display:grid;grid-template-columns:82px 100px 60px 60px 74px 76px 66px 22px;gap:6px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);font-size:11px;}
+  @media (max-width:700px){ .log-row{grid-template-columns:1fr 1fr;row-gap:4px;} }
+  .log-row span{color:var(--chalk-dim);}
+  .log-row .log-date{color:var(--chalk);font-family:'IBM Plex Mono', monospace;}
+  .log-del{background:none;border:none;color:var(--chalk-dim);cursor:pointer;font-size:15px;justify-self:end;}
+  .log-del:hover{color:var(--clay);}
+  .log-empty{font-size:12.5px;color:var(--chalk-dim);}
+  .log-backup-row{margin-top:14px;padding-top:14px;border-top:1px solid var(--line);display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+
+  /* TEMPO */
+  .tempo-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:8px;}
+  .tempo-card{background:var(--turf-mid);border:1px solid var(--line);border-radius:10px;padding:16px 18px;}
+  .tempo-card .tc-label{font-family:'IBM Plex Mono', monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--chalk-dim);margin-bottom:8px;}
+  .tempo-card .tc-row{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-top:1px solid var(--line);}
+  .tempo-card .tc-row:first-of-type{border-top:none;}
+  .tempo-card .tc-name{font-size:12.5px;color:var(--chalk);}
+  .tempo-card .tc-val{font-family:'IBM Plex Mono', monospace;font-size:14px;color:var(--amber);}
+  .tempo-card.diff .tc-val.slower{color:var(--clay);}
+  .tempo-card.diff .tc-val.faster{color:var(--cyan);}
+
+  .summary-card{background:var(--turf-mid);border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin-bottom:12px;}
+  .summary-card p{margin:0 0 8px;font-size:14px;line-height:1.65;color:var(--chalk);}
+
+  /* AI SUMMARY */
+  .ai-card{background:var(--turf-mid);border:1px solid var(--amber);border-radius:10px;padding:18px 20px;margin-bottom:8px;}
+  .ai-key-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;}
+  .ai-key-row input{flex:1;min-width:220px;background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:6px;color:var(--chalk);font-family:'IBM Plex Mono', monospace;font-size:12.5px;padding:9px 10px;}
+  .ai-key-note{font-size:11px;color:var(--chalk-dim);margin-bottom:12px;line-height:1.5;}
+  .ai-output{font-size:14px;line-height:1.7;color:var(--chalk);white-space:pre-wrap;}
+  .ai-output.placeholder{color:var(--chalk-dim);font-style:italic;}
+  .ai-status{font-family:'IBM Plex Mono', monospace;font-size:11.5px;color:var(--chalk-dim);margin-left:8px;}
+
+  /* COMPARE VIEWER */
+  .compare-card{background:var(--turf-mid);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:8px;}
+  .compare-modes{display:flex;gap:8px;margin-bottom:14px;}
+  .compare-stage-row{display:flex;gap:16px;}
+  .compare-stage-row.overlay-mode .stage-b-wrap{display:none;}
+  .stage-a-wrap, .stage-b-wrap{flex:1;position:relative;}
+  .compare-note{font-size:11.5px;color:var(--chalk-dim);margin-top:10px;line-height:1.5;}
+  .sync-scrub-row{margin-top:14px;display:flex;align-items:center;gap:10px;}
+  .sync-scrub-row input[type=range]{flex:1;accent-color:var(--amber);}
+
+  /* CHECKLIST */
+  .checklist-card{background:var(--turf-mid);border:1px solid var(--line);border-radius:10px;padding:6px 18px;margin-bottom:8px;}
+  .cl-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--line);gap:16px;flex-wrap:wrap;}
+  .cl-row:last-of-type{border-bottom:none;}
+  .cl-q{font-size:13.5px;color:var(--chalk);max-width:380px;}
+  .cl-q .cl-hint{display:block;font-size:11.5px;color:var(--chalk-dim);margin-top:3px;}
+  .cl-opts{display:flex;border:1px solid var(--line);border-radius:6px;overflow:hidden;flex-shrink:0;}
+  .cl-opt{font-family:'IBM Plex Mono', monospace;font-size:11px;padding:8px 12px;background:transparent;color:var(--chalk-dim);border:none;cursor:pointer;border-right:1px solid var(--line);}
+  .cl-opt:last-child{border-right:none;}
+  .cl-opt.good.active{background:#3E6B4A;color:var(--chalk);}
+  .cl-opt.needs.active{background:var(--clay);color:var(--chalk);}
+  .cl-opt.unsure.active{background:var(--line);color:var(--chalk-dim);}
+  .notes-row{padding:16px 0;}
+  .notes-row textarea{width:100%;min-height:70px;background:rgba(255,255,255,0.03);border:1px solid var(--line);border-radius:6px;color:var(--chalk);font-family:'IBM Plex Sans', sans-serif;font-size:13px;padding:10px;resize:vertical;}
+  .checklist-actions{margin-top:12px;display:flex;gap:10px;}
+  .copy-status{font-size:11.5px;color:var(--amber);margin-left:4px;}
+
+  /* DRILLS REFERENCE */
+  .drill-ref-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:14px;}
+  .drill-ref-card{background:var(--turf-mid);border:1px solid var(--line);border-left:4px solid var(--amber);border-radius:8px;padding:14px 16px;}
+  .drill-ref-card .dr-cat{font-family:'IBM Plex Mono', monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--chalk-dim);margin-bottom:6px;}
+  .drill-ref-card .dr-title{font-weight:600;font-size:14px;margin-bottom:3px;}
+  .drill-ref-card .dr-org{font-size:11.5px;color:var(--chalk-dim);margin-bottom:8px;}
+  .drill-ref-card p{margin:0;font-size:12.5px;line-height:1.5;color:var(--chalk-dim);}
+
+  .event-controls-card{background:var(--turf-mid);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin-bottom:16px;}
+  .ev-title{font-size:12px;color:var(--chalk-dim);margin-bottom:8px;}
+  .ev-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap;}
+  .ev-label{font-family:'IBM Plex Mono', monospace;font-size:11.5px;color:var(--chalk);min-width:170px;}
+
+  .safety-box{margin-top:8px;background:rgba(181,82,47,0.08);border:1px solid var(--clay);border-radius:8px;padding:14px 16px;font-size:12px;line-height:1.6;color:var(--chalk-dim);}
+  .safety-box b{color:var(--chalk);}
+  .disclaimer{margin-top:32px;font-size:12px;line-height:1.6;color:var(--chalk-dim);border-top:1px solid var(--line);padding-top:16px;}
+  .footer-note{margin-top:56px;font-size:12px;color:var(--chalk-dim);text-align:center;}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <div class="eyebrow">Compare &amp; Track</div>
+    <h1>Delivery <span>Room</span></h1>
+    <p class="sub">Upload your delivery, and optionally a clip to compare it to — a pro, or one of your own past reps. This times the delivery, syncs the two side by side (or ghosted on top of each other), and gives you a structured checklist to run your own eye over — instead of a computer guessing your joint angles to the degree. Nothing uploads to a server.</p>
+
+    <div class="log-card">
+      <div class="lc-title">Log today — throwing or lifting, no video needed</div>
+      <div class="log-fields">
+        <div class="log-field date"><label>Date</label><input type="date" id="logDate"></div>
+        <div class="log-field"><label>Type</label>
+          <select id="logType">
+            <optgroup label="Throwing">
+              <option value="bullpen">Bullpen</option>
+              <option value="flatground">Flat ground</option>
+              <option value="game">Game</option>
+              <option value="long toss">Long toss</option>
+            </optgroup>
+            <optgroup label="Lifting">
+              <option value="lift-lower">Lift — lower body</option>
+              <option value="lift-upper">Lift — upper body</option>
+              <option value="lift-full">Lift — full body</option>
+              <option value="arm-care">Arm care / prehab</option>
+            </optgroup>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="log-field pitches"><label>Throws</label><input type="number" id="logPitchCount" min="0" placeholder="optional"></div>
+        <div class="log-field pitches"><label>Duration (min)</label><input type="number" id="logDuration" min="0" placeholder="optional"></div>
+        <div class="log-field pitches"><label>RPE (1-10)</label><input type="number" id="logRPE" min="1" max="10" placeholder="optional"></div>
+      </div>
+      <div class="log-fields" style="margin-top:10px;">
+        <div class="log-field pitches"><label>Arm feel (0-10)</label><input type="number" id="logSoreness" min="0" max="10" placeholder="optional"></div>
+        <div class="log-field pitches"><label>WHOOP Recovery %</label><input type="number" id="logWhoopRecovery" min="0" max="100" placeholder="optional"></div>
+        <div class="log-field pitches"><label>WHOOP Strain</label><input type="number" id="logWhoopStrain" min="0" max="21" step="0.1" placeholder="optional"></div>
+        <div class="log-field"><label>WHOOP</label>
+          <div style="display:flex;gap:6px;">
+            <button class="btn ghost small" id="whoopConnectBtn" type="button">Connect</button>
+            <button class="btn ghost small" id="whoopFetchBtn" type="button">Fetch latest</button>
+          </div>
+        </div>
+        <div class="log-field pitches"><label>Age (for reference table)</label><input type="number" id="logAge" min="5" max="40" placeholder="optional"></div>
+        <div class="log-field notes"><label>Notes</label><input type="text" id="logNotes" placeholder="How did it feel?"></div>
+      </div>
+      <div class="log-save-row">
+        <button class="btn small" id="saveLogBtn" type="button">Save to log</button>
+        <span class="log-save-note" id="logSaveStatus"></span>
+      </div>
+      <div class="log-save-note" id="whoopStatus" style="margin-top:8px;"></div>
+      <div class="log-save-note" style="margin-top:10px;">Only date and type are needed for a fast entry — everything else is optional and just makes the load numbers below more useful. RPE × duration is what actually makes a lift and a bullpen comparable on the same scale. The WHOOP Connect/Fetch buttons only work if this site has the companion backend deployed (see netlify/WHOOP-SETUP.md) — otherwise just type Recovery/Strain in by hand from the WHOOP app.</div>
+    </div>
+
+    <div class="history-card">
+      <div class="lc-title">History &amp; load</div>
+      <div id="workloadHost"></div>
+      <div id="acwrHost"></div>
+      <div id="tempoTrendHost"></div>
+      <div id="pitchSmartHost"></div>
+      <div id="historyHost"></div>
+      <div class="log-backup-row">
+        <button class="btn ghost small" id="downloadBackupBtn" type="button">Download backup (.json)</button>
+        <button class="btn ghost small" id="restoreBackupBtn" type="button">Restore from file</button>
+        <input type="file" id="restoreFileInput" accept="application/json" style="display:none;">
+        <span class="log-save-note" id="backupStatus"></span>
+      </div>
+      <div class="log-save-note" style="margin-top:8px;">This log lives only in this browser's storage — nothing is uploaded anywhere. Clearing your browser data clears it too, so back it up now and then if it matters to you.</div>
+    </div>
+
+    <div class="upload-grid">
+      <div class="upload-slot">
+        <div class="slot-title">Your delivery</div>
+        <div class="dropzone" id="dropzoneA">
+          <div class="dz-label">Click to choose a video, or drag one in</div>
+          <div class="dz-sub">MP4 or MOV, side-view, one pitch</div>
+          <input type="file" id="fileInputA" accept="video/*">
+        </div>
+        <div class="handedness">
+          Throws:
+          <div class="toggle-group">
+            <button class="toggle-btn active" id="rhpBtnA" type="button">Right</button>
+            <button class="toggle-btn" id="lhpBtnA" type="button">Left</button>
+          </div>
+        </div>
+      </div>
+      <div class="upload-slot">
+        <div class="slot-title">Compare to (optional)</div>
+        <div class="dropzone" id="dropzoneB">
+          <div class="dz-label">Click to choose a video, or drag one in</div>
+          <div class="dz-sub">A pro's clip, or one of your own past reps</div>
+          <input type="file" id="fileInputB" accept="video/*">
+        </div>
+        <div class="handedness">
+          Throws:
+          <div class="toggle-group">
+            <button class="toggle-btn active" id="rhpBtnB" type="button">Right</button>
+            <button class="toggle-btn" id="lhpBtnB" type="button">Left</button>
+          </div>
+        </div>
+        <button class="clear-slot" id="clearB" type="button" style="display:none;">Remove this clip</button>
+      </div>
+    </div>
+
+    <div class="analyze-row">
+      <button class="btn" id="analyzeBtn" disabled>Loading pose model…</button>
+      <span class="status" id="statusLabel"></span>
+    </div>
+  </div>
+
+  <div class="video-grid" id="videoGrid">
+    <div class="video-panel" id="panelA">
+      <div class="panel-label">Your delivery</div>
+      <div class="stage" id="stageA">
+        <video id="videoA" playsinline muted></video>
+        <canvas id="overlayA"></canvas>
+      </div>
+      <div class="transport">
+        <button class="btn ghost small" id="playBtnA" type="button">Play</button>
+        <input type="range" id="scrubA" min="0" max="1000" value="0">
+        <div class="time" id="timeLabelA">0.00s</div>
+      </div>
+    </div>
+    <div class="video-panel" id="panelB" style="display:none;">
+      <div class="panel-label">Compare to</div>
+      <div class="stage" id="stageB">
+        <video id="videoB" playsinline muted></video>
+        <canvas id="overlayB"></canvas>
+      </div>
+      <div class="transport">
+        <button class="btn ghost small" id="playBtnB" type="button">Play</button>
+        <input type="range" id="scrubB" min="0" max="1000" value="0">
+        <div class="time" id="timeLabelB">0.00s</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="results" style="display:none;">
+
+    <h2 class="section-title">Tempo</h2>
+    <p class="section-desc">The timing coaches actually watch for — how long you spend at each phase of the delivery. This is just counting frames between visually-identified checkpoints, so it holds up fine even from an imperfect camera angle, unlike a computed joint angle would.</p>
+    <div class="event-controls-card">
+      <div class="ev-title">Auto-detected foot strike &amp; release look off? Adjust here — it updates the timing below.</div>
+      <div id="eventControlsA"></div>
+      <div id="eventControlsB"></div>
+    </div>
+    <div class="tempo-grid" id="tempoHost"></div>
+
+    <h2 class="section-title">Kinetic chain</h2>
+    <p class="section-desc">This is the actual energy-transfer question: do your hips, shoulders, and arm speed up in the right order, each building on the one before it, or is the chain compressed and firing all at once? This is about timing and sequence, not absolute angles, so it's much less sensitive to camera angle than a joint-angle measurement would be.</p>
+    <div id="chainHost"></div>
+
+    <div id="compareSection" style="display:none;">
+      <h2 class="section-title">Side by side</h2>
+      <p class="section-desc">Synced so foot strike lines up in both clips. Drag the shared scrubber to step through the delivery together — that's a frame-accurate comparison. "Play both" is best-effort and can drift a little, since these are two independent video files.</p>
+      <div class="compare-card">
+        <div class="compare-modes">
+          <button class="btn ghost small active" id="modeSideBySide" type="button">Side by side</button>
+          <button class="btn ghost small" id="modeOverlay" type="button">Overlay</button>
+        </div>
+        <div class="compare-stage-row" id="compareStageRow">
+          <div class="stage-a-wrap">
+            <div class="stage" id="cmpStageA">
+              <video id="cmpVideoA" playsinline muted></video>
+              <canvas id="cmpOverlayA"></canvas>
+            </div>
+          </div>
+          <div class="stage-b-wrap">
+            <div class="stage" id="cmpStageB">
+              <video id="cmpVideoB" playsinline muted></video>
+              <canvas id="cmpOverlayB"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="sync-scrub-row">
+          <button class="btn ghost small" id="cmpPlayBtn" type="button">Play both</button>
+          <input type="range" id="cmpScrub" min="0" max="1000" value="500">
+          <div class="time" id="cmpTimeLabel">strike</div>
+        </div>
+        <div class="compare-note">In overlay mode, the compare clip's skeleton (cyan) is scaled and centered to your delivery's hips and torso length each frame — it lines up position and size, not camera angle or lens differences, so treat it as a visual guide, not a precise measurement.</div>
+      </div>
+    </div>
+
+    <h2 class="section-title">Checklist</h2>
+    <p class="section-desc">Run your own eye over it — this is exactly what a coach looks for on the field, no lab required. Nothing here is computed; it's here to give the self-review some structure.</p>
+    <div class="checklist-card" id="checklistHost"></div>
+    <div class="checklist-actions">
+      <button class="btn ghost small" id="copyChecklistBtn" type="button">Copy summary</button>
+      <button class="btn ghost small" id="saveLogFromResultsBtn" type="button">Save this session to your log</button>
+      <span class="copy-status" id="copyStatus"></span>
+    </div>
+
+    <h2 class="section-title">AI summary</h2>
+    <p class="section-desc">This doesn't measure anything new — it takes the tempo, the kinetic chain readout, and whatever you've filled in on the checklist above, and asks Claude to write it up as an actual narrative instead of numbers sitting side by side. Only as good as what's fed into it, and it can't see anything the data above doesn't already show.</p>
+    <div class="ai-card">
+      <div class="ai-key-row">
+        <input type="password" id="apiKeyInput" placeholder="Anthropic API key (sk-ant-...)">
+        <button class="btn small" id="generateAiBtn" type="button">Generate summary</button>
+        <span class="ai-status" id="aiStatus"></span>
+      </div>
+      <div class="ai-key-note">Stays in this browser only — sent straight from your device to Anthropic's API, never through any server of ours (this file has no backend at all). Get a key at console.anthropic.com if you don't have one; this calls the API directly using your own key and usage is billed to that key, not free.</div>
+      <div class="ai-output placeholder" id="aiOutput">Fill in the checklist above (or not — tempo and kinetic chain alone still work), then generate a summary.</div>
+    </div>
+
+    <h2 class="section-title">Drills by focus area</h2>
+    <p class="section-desc">Not auto-triggered by a score — pick whichever area your own eye (or the checklist above) flagged. Each is sourced to a real training program, not a generic list.</p>
+    <div class="drill-ref-grid" id="drillRefHost"></div>
+
+    <div class="safety-box">
+      <b>A note on plyo and weighted-ball work:</b> a few of the drills below use Plyocare-style or weighted balls. These are standard at the college and pro level, but published research has also linked weighted-ball overload/underload throwing to higher rates of arm and trunk injury when progression isn't managed carefully. Most programs restrict that kind of loaded throwing to pitchers who are roughly 16 and up and skeletally mature, built up gradually, and ideally overseen by a coach or physical therapist.
+    </div>
+
+    <div class="disclaimer">
+      This version deliberately doesn't measure or score joint angles. A single 2D phone camera can't reliably do that — the same real angle looks different depending on how square the camera is to the pitcher, and no amount of smoothing or model upgrades fully fixes that. What it does instead: times the delivery by detecting the same visual checkpoints a coach would (leg lift, foot strike, release), and helps you compare two clips side by side or overlaid. Foot strike and release are still detected automatically and can still be wrong on a given clip — use the adjustment controls above if the markers look off. The overlay view aligns position and size, not camera angle, so differences you see there can come from filming setup as much as from mechanics. Drill suggestions are a starting point, not a personalized program — check with a coach or physical therapist before changing your training, especially before adding weighted-ball or plyo work.
+    </div>
+  </div>
+
+  <div class="footer-note">Built with on-device pose detection. Your video never leaves your browser.</div>
+</div>
+
+<script type="module">
+const $ = id => document.getElementById(id);
+const videoGrid = $('videoGrid');
+const resultsEl = $('results');
+const analyzeBtn = $('analyzeBtn');
+const statusLabel = $('statusLabel');
+const panelB = $('panelB');
+const clearBBtn = $('clearB');
+const tempoHost = $('tempoHost');
+const compareSection = $('compareSection');
+const compareStageRow = $('compareStageRow');
+const modeSideBySide = $('modeSideBySide');
+const modeOverlay = $('modeOverlay');
+const cmpVideoA = $('cmpVideoA'), cmpVideoB = $('cmpVideoB');
+const cmpOverlayA = $('cmpOverlayA'), cmpOverlayB = $('cmpOverlayB');
+const cmpCtxA = cmpOverlayA.getContext('2d'), cmpCtxB = cmpOverlayB.getContext('2d');
+const cmpPlayBtn = $('cmpPlayBtn');
+const cmpScrub = $('cmpScrub');
+const cmpTimeLabel = $('cmpTimeLabel');
+const checklistHost = $('checklistHost');
+const copyChecklistBtn = $('copyChecklistBtn');
+const copyStatus = $('copyStatus');
+const drillRefHost = $('drillRefHost');
+
+let poseLandmarker = null;
+
+function makeClip(key){
+  return { key, handed:'R', url:null, frames:[], analyzed:false, analyzing:false, eventOverride:null, loaded:false };
+}
+const clipA = makeClip('A');
+const clipB = makeClip('B');
+function clipDom(key){
+  return {
+    dropzone: $('dropzone'+key), fileInput: $('fileInput'+key),
+    video: $('video'+key), overlay: $('overlay'+key),
+    playBtn: $('playBtn'+key), scrub: $('scrub'+key), timeLabel: $('timeLabel'+key),
+    rhpBtn: $('rhpBtn'+key), lhpBtn: $('lhpBtn'+key)
+  };
+}
+clipA.dom = clipDom('A'); clipA.ctx = clipA.dom.overlay.getContext('2d');
+clipB.dom = clipDom('B'); clipB.ctx = clipB.dom.overlay.getContext('2d');
+
+// ---- MediaPipe requires a strictly increasing timestamp per call, independent
+// of video seek position (the compare/analysis flow seeks backward at times). ----
+let lastPoseTs = 0;
+function nextPoseTimestamp(){
+  const now = Math.round(performance.now()*1000);
+  lastPoseTs = Math.max(lastPoseTs+1, now);
+  return lastPoseTs;
+}
+
+// ---- Model load ----
+(async function initModel(){
+  statusLabel.textContent = 'Loading pose model…';
+  try{
+    const { PoseLandmarker, FilesetResolver } = await import("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs");
+    const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
+    try{
+      poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
+        baseOptions: { modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task", delegate:"GPU" },
+        runningMode:"VIDEO", numPoses:1
+      });
+    }catch(gpuErr){
+      console.warn('GPU delegate failed, falling back to CPU', gpuErr);
+      poseLandmarker = await PoseLandmarker.createFromOptions(vision, {
+        baseOptions: { modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_full/float16/1/pose_landmarker_full.task", delegate:"CPU" },
+        runningMode:"VIDEO", numPoses:1
+      });
+    }
+    statusLabel.textContent = 'Model ready.';
+    updateAnalyzeButtonState();
+  }catch(err){
+    statusLabel.textContent = 'Pose model failed to load: ' + (err && err.message ? err.message : err);
+    console.error(err);
+  }
+})();
+
+function updateAnalyzeButtonState(){
+  const ready = !!poseLandmarker;
+  analyzeBtn.disabled = !(ready && clipA.loaded);
+  if (ready) analyzeBtn.textContent = clipA.analyzed ? 'Re-Analyze' : 'Analyze';
+  else analyzeBtn.textContent = 'Loading pose model…';
+}
+
+// ---- Handedness ----
+function wireHandedness(clip){
+  clip.dom.rhpBtn.onclick = () => { clip.handed='R'; clip.dom.rhpBtn.classList.add('active'); clip.dom.lhpBtn.classList.remove('active'); };
+  clip.dom.lhpBtn.onclick = () => { clip.handed='L'; clip.dom.lhpBtn.classList.add('active'); clip.dom.rhpBtn.classList.remove('active'); };
+}
+
+// ---- File handling ----
+function wireDropzone(clip){
+  clip.dom.dropzone.onclick = () => clip.dom.fileInput.click();
+  ['dragover','dragenter'].forEach(ev=>clip.dom.dropzone.addEventListener(ev, e=>{e.preventDefault(); clip.dom.dropzone.classList.add('drag');}));
+  ['dragleave','drop'].forEach(ev=>clip.dom.dropzone.addEventListener(ev, e=>{e.preventDefault(); clip.dom.dropzone.classList.remove('drag');}));
+  clip.dom.dropzone.addEventListener('drop', e=>{ const f=e.dataTransfer.files[0]; if(f) loadFile(clip,f); });
+  clip.dom.fileInput.onchange = () => { if (clip.dom.fileInput.files[0]) loadFile(clip, clip.dom.fileInput.files[0]); };
+}
+
+function loadFile(clip, file){
+  const url = URL.createObjectURL(file);
+  clip.url = url;
+  clip.dom.video.src = url;
+  clip.dom.video.load();
+  clip.loaded = true;
+  clip.frames = [];
+  clip.analyzed = false;
+  clip.eventOverride = null;
+  clip.dom.dropzone.classList.add('has-file');
+  clip.dom.dropzone.querySelector('.dz-label').textContent = file.name;
+  resultsEl.style.display = 'none';
+  compareSection.style.display = 'none';
+  videoGrid.classList.add('show');
+  if (clip.key==='B'){
+    panelB.style.display = 'block';
+    clearBBtn.style.display = 'inline-block';
+    videoGrid.classList.remove('single');
+  } else if (!clipB.loaded){
+    videoGrid.classList.add('single');
+  }
+  clip.dom.video.onloadedmetadata = () => { resizeCanvasTo(clip.dom.overlay, clip.dom.video); clip.dom.scrub.value=0; };
+  updateAnalyzeButtonState();
+}
+
+clearBBtn.onclick = () => {
+  clipB.loaded = false; clipB.frames = []; clipB.analyzed = false; clipB.eventOverride = null; clipB.url = null;
+  clipB.dom.video.src = '';
+  clipB.dom.dropzone.classList.remove('has-file');
+  clipB.dom.dropzone.querySelector('.dz-label').textContent = 'Click to choose a video, or drag one in';
+  panelB.style.display = 'none';
+  clearBBtn.style.display = 'none';
+  videoGrid.classList.add('single');
+  resultsEl.style.display = 'none';
+  compareSection.style.display = 'none';
+  updateAnalyzeButtonState();
+};
+
+function resizeCanvasTo(canvas, video){
+  const rect = video.getBoundingClientRect();
+  canvas.width = video.videoWidth; canvas.height = video.videoHeight;
+  canvas.style.width = rect.width+'px'; canvas.style.height = rect.height+'px';
+  video.style.width = '100%'; video.style.position = 'relative';
+}
+window.addEventListener('resize', ()=>{ [clipA,clipB].forEach(c=>{ if(c.loaded && c.dom.video.videoWidth) resizeCanvasTo(c.dom.overlay, c.dom.video); }); });
+
+// ---- Skeleton drawing (pixel-space points in; used for live draw, cache draw, and the transformed overlay) ----
+const SKELETON_PAIRS = [[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28]];
+const SKELETON_PTS = [11,12,13,14,15,16,23,24,25,26,27,28];
+function lmToPx(lm, W, H){ return lm.map(p=>({x:p.x*W, y:p.y*H})); }
+function drawSkeletonAt(ctx, pxPoints, color, alpha, lw, r){
+  ctx.save();
+  ctx.globalAlpha = alpha===undefined?0.85:alpha;
+  ctx.strokeStyle = color; ctx.lineWidth = lw||3;
+  SKELETON_PAIRS.forEach(([a,b])=>{
+    const p1=pxPoints[a], p2=pxPoints[b];
+    if(!p1||!p2) return;
+    ctx.beginPath(); ctx.moveTo(p1.x,p1.y); ctx.lineTo(p2.x,p2.y); ctx.stroke();
+  });
+  ctx.fillStyle = color;
+  SKELETON_PTS.forEach(i=>{
+    const p = pxPoints[i]; if(!p) return;
+    ctx.beginPath(); ctx.arc(p.x,p.y, r||4, 0, Math.PI*2); ctx.fill();
+  });
+  ctx.restore();
+}
+function drawSkeleton(clip, lm){
+  const W=clip.dom.overlay.width, H=clip.dom.overlay.height;
+  clip.ctx.clearRect(0,0,W,H);
+  drawSkeletonAt(clip.ctx, lmToPx(lm,W,H), '#FFFFFF', 0.85, Math.max(2,W*0.004), Math.max(3,W*0.006));
+}
+function drawFromCache(clip, t){
+  if (clip.frames.length===0) return;
+  let nearest=clip.frames[0], bestDiff=Infinity;
+  for (const f of clip.frames){ const d=Math.abs(f.t-t); if(d<bestDiff){bestDiff=d;nearest=f;} }
+  const W=clip.dom.overlay.width, H=clip.dom.overlay.height;
+  clip.ctx.clearRect(0,0,W,H);
+  drawSkeletonAt(clip.ctx, lmToPx(nearest.lm,W,H), '#FFFFFF', 0.85, Math.max(2,W*0.004), Math.max(3,W*0.006));
+}
+
+// ---- Transport (per clip) ----
+function wireTransport(clip){
+  clip.dom.playBtn.onclick = () => {
+    if (clip.dom.video.paused){ clip.dom.video.play(); clip.dom.playBtn.textContent='Pause'; }
+    else { clip.dom.video.pause(); clip.dom.playBtn.textContent='Play'; }
+  };
+  clip.dom.video.ontimeupdate = () => {
+    if (clip.dom.video.duration){
+      clip.dom.scrub.value = Math.round((clip.dom.video.currentTime/clip.dom.video.duration)*1000);
+      clip.dom.timeLabel.textContent = clip.dom.video.currentTime.toFixed(2)+'s';
+    }
+    if (clip.analyzed) drawFromCache(clip, clip.dom.video.currentTime);
+  };
+  clip.dom.video.onended = () => { clip.dom.playBtn.textContent='Play'; };
+  clip.dom.scrub.oninput = () => {
+    if (clip.dom.video.duration) clip.dom.video.currentTime = (clip.dom.scrub.value/1000)*clip.dom.video.duration;
+  };
+  clip.dom.video.onpause = () => liveReadout(clip);
+  clip.dom.video.onseeked = () => { if (!clip.analyzed && !clip.analyzing) liveReadout(clip); };
+}
+let liveBusy = { A:false, B:false };
+async function liveReadout(clip){
+  if (!poseLandmarker || liveBusy[clip.key] || clip.dom.video.paused===false || clip.dom.video.videoWidth===0) return;
+  liveBusy[clip.key] = true;
+  try{
+    const res = poseLandmarker.detectForVideo(clip.dom.video, nextPoseTimestamp());
+    if (res.landmarks && res.landmarks[0]) drawSkeleton(clip, res.landmarks[0]);
+  }catch(e){}
+  liveBusy[clip.key] = false;
+}
+
+// ---- Confidence & smoothing ----
+const CONF_KEYS = [0,11,12,13,14,15,16,23,24,25,26,27,28];
+function frameConfidence(lm){
+  let sum=0, n=0;
+  for (const i of CONF_KEYS){ const v = lm[i] && typeof lm[i].visibility==='number' ? lm[i].visibility : 1; sum+=v; n++; }
+  return n ? sum/n : 1;
+}
+const MIN_FRAME_CONF = 0.3;
+
+const IDX = { Nose:0, Lsh:11, Rsh:12, Lwr:15, Rwr:16, Lhip:23, Rhip:24, Lan:27, Ran:28 };
+function lineAngle(a,b){ return Math.atan2(b.y-a.y, b.x-a.x)*180/Math.PI; }
+function computeMetrics(lm, handed){
+  const frontAn = handed==='R' ? lm[IDX.Lan] : lm[IDX.Ran];
+  const armWr = handed==='R' ? lm[IDX.Rwr] : lm[IDX.Lwr];
+  return {
+    frontAnkleY: frontAn.y,
+    wristX: armWr.x, wristY: armWr.y,
+    noseX: lm[IDX.Nose].x, noseY: lm[IDX.Nose].y,
+    lshX: lm[IDX.Lsh].x, lshY: lm[IDX.Lsh].y,
+    rshX: lm[IDX.Rsh].x, rshY: lm[IDX.Rsh].y,
+    lhipX: lm[IDX.Lhip].x, lhipY: lm[IDX.Lhip].y,
+    rhipX: lm[IDX.Rhip].x, rhipY: lm[IDX.Rhip].y,
+    hipLine: lineAngle(lm[IDX.Lhip], lm[IDX.Rhip]),
+    shoulderLine: lineAngle(lm[IDX.Lsh], lm[IDX.Rsh])
+  };
+}
+function smoothFrames(raw, handed, windowRadius){
+  windowRadius = windowRadius===undefined ? 2 : windowRadius;
+  const n = raw.length;
+  const out = [];
+  for (let i=0;i<n;i++){
+    const lo=Math.max(0,i-windowRadius), hi=Math.min(n-1,i+windowRadius);
+    const smoothedLm = [];
+    for (let li=0; li<raw[i].lm.length; li++){
+      let sx=0, sy=0, sz=0, sw=0;
+      for (let j=lo;j<=hi;j++){
+        const p = raw[j].lm[li];
+        const w = Math.max(0.05, raw[j].conf);
+        sx += p.x*w; sy += p.y*w; sz += (p.z||0)*w; sw += w;
+      }
+      smoothedLm.push({ x: sx/sw, y: sy/sw, z: sz/sw, visibility: raw[i].lm[li].visibility });
+    }
+    out.push({ t: raw[i].t, lm: smoothedLm, conf: raw[i].conf, m: computeMetrics(smoothedLm, handed) });
+  }
+  return out;
+}
+
+// ---- Sampling ----
+function seekTo(video, t){
+  return new Promise(resolve=>{
+    const onSeeked = () => { video.removeEventListener('seeked', onSeeked); resolve(); };
+    video.addEventListener('seeked', onSeeked);
+    video.currentTime = t;
+  });
+}
+function uniformTimes(start, end, count){
+  const times = []; const step = (end-start)/count;
+  for (let i=0;i<=count;i++) times.push(Math.min(end-0.001, start+i*step));
+  return times;
+}
+async function sampleAt(clip, times, progressLabel){
+  const out = []; let dropped = 0;
+  for (let i=0;i<times.length;i++){
+    const t = times[i];
+    await seekTo(clip.dom.video, t);
+    const res = poseLandmarker.detectForVideo(clip.dom.video, nextPoseTimestamp());
+    if (res.landmarks && res.landmarks[0]){
+      const conf = frameConfidence(res.landmarks[0]);
+      if (conf >= MIN_FRAME_CONF){
+        out.push({ t, lm: res.landmarks[0], conf });
+        drawSkeleton(clip, res.landmarks[0]);
+      } else dropped++;
+    }
+    statusLabel.textContent = `${progressLabel} (clip ${clip.key})… ${Math.round((i/times.length)*100)}%`;
+    statusLabel.classList.add('active');
+  }
+  return { samples: out, dropped };
+}
+
+// ---- Event detection (time-based, works under non-uniform sampling) ----
+function idxAtTime(frames, targetT){
+  let best=0, bestDiff=Infinity;
+  for (let i=0;i<frames.length;i++){ const d=Math.abs(frames[i].t-targetT); if(d<bestDiff){bestDiff=d;best=i;} }
+  return best;
+}
+function detectEvents(clip){
+  const frames = clip.frames;
+  if (frames.length<8) return null;
+  const n = frames.length;
+  const t0=frames[0].t, tN=frames[n-1].t, dur=(tN-t0)||1;
+  const ys = frames.map(f=>f.m.frontAnkleY);
+  let liftIdx = idxAtTime(frames, t0+dur*0.1);
+  let minY = Infinity;
+  const scanStart = idxAtTime(frames, t0+dur*0.1), scanEnd = idxAtTime(frames, t0+dur*0.75);
+  for (let i=scanStart;i<=scanEnd;i++){ if (ys[i]<minY){ minY=ys[i]; liftIdx=i; } }
+  const groundY = ys[0], liftY = ys[liftIdx];
+  const settleThresh = liftY + (groundY-liftY)*0.6;
+  const VEL_THRESH = 0.6;
+  let strikeIdx = liftIdx+1;
+  for (let i=liftIdx+1; i<n-2; i++){
+    const dt1 = (frames[i+1].t-frames[i].t)||0.001, dt2 = (frames[i+2].t-frames[i+1].t)||0.001;
+    const v1 = Math.abs(ys[i+1]-ys[i])/dt1, v2 = Math.abs(ys[i+2]-ys[i+1])/dt2;
+    const nearGround = ys[i] >= settleThresh;
+    if (nearGround && v1<VEL_THRESH && v2<VEL_THRESH){ strikeIdx=i; break; }
+    strikeIdx = i;
+  }
+  let releaseIdx = Math.min(strikeIdx+3, n-1);
+  let maxSpeed = -1;
+  const releaseScanEnd = Math.min(n-1, idxAtTime(frames, frames[strikeIdx].t+dur*0.35));
+  for (let i=strikeIdx; i<releaseScanEnd; i++){
+    const dt = (frames[i+1].t-frames[i].t)||0.001;
+    const dx = frames[i+1].m.wristX-frames[i].m.wristX, dy = frames[i+1].m.wristY-frames[i].m.wristY;
+    const speed = Math.sqrt(dx*dx+dy*dy)/dt;
+    if (speed>maxSpeed){ maxSpeed=speed; releaseIdx=i+1; }
+  }
+  return { liftIdx, strikeIdx, releaseIdx };
+}
+function getEvents(clip){ return clip.eventOverride || detectEvents(clip); }
+function nudgeEvent(clip, key, delta){
+  const base = getEvents(clip); if (!base) return;
+  const next = Object.assign({}, base);
+  next[key] = Math.max(0, Math.min(clip.frames.length-1, base[key]+delta));
+  clip.eventOverride = next;
+  renderResultsUI();
+}
+function resetEventOverride(clip){
+  clip.eventOverride = null;
+  renderResultsUI();
+}
+function renderEventControls(){
+  [ {clip:clipA, host:$('eventControlsA'), label:'Your delivery'}, {clip:clipB, host:$('eventControlsB'), label:'Compare clip'} ].forEach(({clip,host,label})=>{
+    if (!clip.loaded || !clip.analyzed){ host.innerHTML=''; return; }
+    const ev = getEvents(clip);
+    if (!ev){ host.innerHTML=''; return; }
+    const isOverridden = !!clip.eventOverride;
+    host.innerHTML = `
+      <div class="ev-row">
+        <span class="ev-label">${label} — strike: frame ${ev.strikeIdx} · ${clip.frames[ev.strikeIdx].t.toFixed(2)}s</span>
+        <button class="btn ghost small" data-c="${clip.key}" data-act="strike-" type="button">◀</button>
+        <button class="btn ghost small" data-c="${clip.key}" data-act="strike+" type="button">▶</button>
+      </div>
+      <div class="ev-row">
+        <span class="ev-label">${label} — release: frame ${ev.releaseIdx} · ${clip.frames[ev.releaseIdx].t.toFixed(2)}s</span>
+        <button class="btn ghost small" data-c="${clip.key}" data-act="release-" type="button">◀</button>
+        <button class="btn ghost small" data-c="${clip.key}" data-act="release+" type="button">▶</button>
+        ${isOverridden ? `<button class="btn ghost small" data-c="${clip.key}" data-act="reset" type="button">Reset</button>` : ''}
+      </div>
+    `;
+    host.querySelectorAll('button').forEach(btn=>{
+      btn.onclick = () => {
+        const c = btn.getAttribute('data-c')==='A' ? clipA : clipB;
+        const act = btn.getAttribute('data-act');
+        if (act==='strike-') nudgeEvent(c,'strikeIdx',-1);
+        else if (act==='strike+') nudgeEvent(c,'strikeIdx',1);
+        else if (act==='release-') nudgeEvent(c,'releaseIdx',-1);
+        else if (act==='release+') nudgeEvent(c,'releaseIdx',1);
+        else if (act==='reset') resetEventOverride(c);
+      };
+    });
+  });
+}
+
+// ---- Full analyze pass (two-pass adaptive sampling), per clip ----
+async function analyzeClip(clip){
+  const video = clip.dom.video;
+  const duration = video.duration;
+  const coarseCount = Math.min(100, Math.max(50, Math.round(duration*24)));
+  const coarseTimes = uniformTimes(0, duration, coarseCount);
+  const coarsePass = await sampleAt(clip, coarseTimes, 'Analyzing');
+  let totalDropped = coarsePass.dropped;
+  clip.frames = smoothFrames(coarsePass.samples, clip.handed);
+  const roughEvents = detectEvents(clip);
+  if (roughEvents && clip.frames[roughEvents.liftIdx] && clip.frames[roughEvents.releaseIdx]){
+    const liftT = clip.frames[roughEvents.liftIdx].t, releaseT = clip.frames[roughEvents.releaseIdx].t;
+    const denseStart = Math.max(0, liftT-0.05), denseEnd = Math.min(duration, releaseT+0.15);
+    if (denseEnd > denseStart){
+      const denseTimes = uniformTimes(denseStart, denseEnd, 60);
+      const densePass = await sampleAt(clip, denseTimes, 'Refining foot strike / release');
+      totalDropped += densePass.dropped;
+      const keptCoarse = coarsePass.samples.filter(f => f.t<denseStart || f.t>denseEnd);
+      const merged = keptCoarse.concat(densePass.samples).sort((a,b)=>a.t-b.t);
+      clip.frames = smoothFrames(merged, clip.handed);
+    }
+  }
+  clip.analyzed = true;
+  clip.eventOverride = null;
+  return totalDropped;
+}
+
+analyzeBtn.onclick = async () => {
+  if (!poseLandmarker || !clipA.loaded) return;
+  analyzeBtn.disabled = true;
+  [clipA,clipB].forEach(c=>{ if (c.loaded){ c.dom.video.pause(); c.dom.playBtn.textContent='Play'; } });
+  try{
+    const droppedA = await analyzeClip(clipA);
+    let msg = `Clip A: ${clipA.frames.length} frames` + (droppedA>0 ? ` (${droppedA} dropped for low confidence)` : '');
+    if (clipB.loaded){
+      const droppedB = await analyzeClip(clipB);
+      msg += ` · Clip B: ${clipB.frames.length} frames` + (droppedB>0 ? ` (${droppedB} dropped)` : '');
+    }
+    statusLabel.textContent = msg + '.';
+    statusLabel.classList.remove('active');
+    clipA.dom.video.currentTime = 0;
+    if (clipB.loaded) clipB.dom.video.currentTime = 0;
+    buildResults();
+  }catch(err){
+    statusLabel.textContent = 'Analysis error: ' + (err && err.message ? err.message : err);
+    statusLabel.classList.remove('active');
+    console.error(err);
+  }finally{
+    analyzeBtn.disabled = false;
+    updateAnalyzeButtonState();
+  }
+};
+
+// ---- Tempo ----
+function tempoStats(clip){
+  const ev = getEvents(clip);
+  if (!ev) return null;
+  const f = clip.frames;
+  return {
+    liftToStrike: (f[ev.strikeIdx].t - f[ev.liftIdx].t)*1000,
+    strikeToRelease: (f[ev.releaseIdx].t - f[ev.strikeIdx].t)*1000,
+    total: (f[ev.releaseIdx].t - f[ev.liftIdx].t)*1000
+  };
+}
+function tempoCardHtml(label, t){
+  return `<div class="tc-label">${label}</div>
+    <div class="tc-row"><span class="tc-name">Leg lift → foot strike</span><span class="tc-val">${Math.round(t.liftToStrike)} ms</span></div>
+    <div class="tc-row"><span class="tc-name">Foot strike → release</span><span class="tc-val">${Math.round(t.strikeToRelease)} ms</span></div>
+    <div class="tc-row"><span class="tc-name">Total (lift → release)</span><span class="tc-val">${Math.round(t.total)} ms</span></div>`;
+}
+function buildTempo(){
+  tempoHost.innerHTML = '';
+  const tA = clipA.analyzed ? tempoStats(clipA) : null;
+  const tB = (clipB.loaded && clipB.analyzed) ? tempoStats(clipB) : null;
+  if (tA){
+    const card = document.createElement('div'); card.className='tempo-card';
+    card.innerHTML = tempoCardHtml('Your delivery', tA);
+    tempoHost.appendChild(card);
+  }
+  if (tB){
+    const card = document.createElement('div'); card.className='tempo-card';
+    card.innerHTML = tempoCardHtml('Compare clip', tB);
+    tempoHost.appendChild(card);
+  }
+  if (tA && tB){
+    const d1=tA.liftToStrike-tB.liftToStrike, d2=tA.strikeToRelease-tB.strikeToRelease, d3=tA.total-tB.total;
+    const fmt = d => (d>=0?'+':'')+Math.round(d)+' ms';
+    const cls = d => Math.abs(d)<15 ? '' : (d>0?'slower':'faster');
+    const card = document.createElement('div'); card.className='tempo-card diff';
+    card.innerHTML = `<div class="tc-label">Difference (yours minus compare)</div>
+      <div class="tc-row"><span class="tc-name">Leg lift → foot strike</span><span class="tc-val ${cls(d1)}">${fmt(d1)}</span></div>
+      <div class="tc-row"><span class="tc-name">Foot strike → release</span><span class="tc-val ${cls(d2)}">${fmt(d2)}</span></div>
+      <div class="tc-row"><span class="tc-name">Total (lift → release)</span><span class="tc-val ${cls(d3)}">${fmt(d3)}</span></div>`;
+    tempoHost.appendChild(card);
+  }
+}
+
+// ---- Kinetic chain / energy transfer ----
+// The real proximal-to-distal story: hips should reach peak rotation speed
+// first, then shoulders/trunk, then the arm (proxied here by wrist speed,
+// the fastest-moving point we track) -- each link should pick up speed from
+// the one before it. This is about ORDER and TIMING GAPS between peaks, not
+// absolute joint angles, so it holds up far better under an imperfect camera
+// angle than degree-based measurement did.
+function computeKineticChain(clip, events){
+  if (!events) return null;
+  const frames = clip.frames;
+  const startI = events.liftIdx, endI = Math.min(frames.length-1, events.releaseIdx+5);
+  if (endI-startI < 3) return null;
+  function peakOf(getter){
+    let peakIdx=startI, peakVal=-1;
+    for (let i=startI;i<endI;i++){
+      const dt=(frames[i+1].t-frames[i].t)||0.001;
+      const v = getter(i,dt);
+      if (v>peakVal){ peakVal=v; peakIdx=i; }
+    }
+    return { peakIdx, peakVal };
+  }
+  const hipPeak = peakOf((i,dt)=>{ let d=Math.abs(frames[i+1].m.hipLine-frames[i].m.hipLine); if(d>90)d=180-d; return d/dt; });
+  const shPeak  = peakOf((i,dt)=>{ let d=Math.abs(frames[i+1].m.shoulderLine-frames[i].m.shoulderLine); if(d>90)d=180-d; return d/dt; });
+  const wrPeak  = peakOf((i,dt)=>{ const dx=frames[i+1].m.wristX-frames[i].m.wristX, dy=frames[i+1].m.wristY-frames[i].m.wristY; return Math.sqrt(dx*dx+dy*dy)/dt; });
+  const gapHipSh = (frames[shPeak.peakIdx].t - frames[hipPeak.peakIdx].t)*1000;
+  const gapShWr  = (frames[wrPeak.peakIdx].t - frames[shPeak.peakIdx].t)*1000;
+  return { hipPeak, shPeak, wrPeak, gapHipSh, gapShWr, startI, endI,
+    orderOk: gapHipSh>0 && gapShWr>0 };
+}
+function chainReadoutText(kc){
+  if (!kc) return 'Not enough clean tracking through the delivery to read the kinetic chain on this clip.';
+  const parts = [];
+  parts.push(`Hips → shoulders: ${Math.round(kc.gapHipSh)}ms. Shoulders → arm: ${Math.round(kc.gapShWr)}ms.`);
+  if (kc.orderOk && kc.gapHipSh>=20 && kc.gapShWr>=15){
+    parts.push("Both links fire in the right order with real separation between them -- that reads as an efficiently sequenced chain, energy building link to link rather than everything firing at once.");
+  } else if (!kc.orderOk){
+    parts.push("At least one link isn't firing in the expected order (hips, then shoulders, then arm) -- that usually shows up as less speed making it to the ball even when the effort going in feels the same.");
+  } else {
+    parts.push("The gaps are there but tight -- segments are firing close together rather than clearly building on each other. Often felt as an arm that has to work harder to make up for what the body didn't build.");
+  }
+  return parts.join(' ');
+}
+function buildChainSection(){
+  const host = $('chainHost');
+  if (!clipA.analyzed){ host.innerHTML=''; return; }
+  const events = getEvents(clipA);
+  const kc = computeKineticChain(clipA, events);
+  host.innerHTML = '';
+
+  const readoutCard = document.createElement('div');
+  readoutCard.className = 'summary-card';
+  readoutCard.innerHTML = `<p>${chainReadoutText(kc)}</p>
+    <div class="rc-source">Hip-to-shoulder timing: proximal-to-distal sequencing concept and reference gap, per RPP Baseball (Rockland Peak Performance) kinematic sequencing analysis. Shoulder-to-arm timing follows the same logic but isn't tied to a specific published number -- treat it as directional.</div>`;
+  host.appendChild(readoutCard);
+
+  if (!kc) return;
+  const frames = clipA.frames;
+  const { startI, endI } = kc;
+  function series(getter){
+    const vals=[0];
+    for (let i=startI;i<endI;i++){ const dt=(frames[i+1].t-frames[i].t)||0.001; vals.push(getter(i,dt)); }
+    const max = Math.max(...vals,1);
+    return vals.map(v=>v/max*100);
+  }
+  const hipS = series((i,dt)=>{ let d=Math.abs(frames[i+1].m.hipLine-frames[i].m.hipLine); if(d>90)d=180-d; return d/dt; });
+  const shS  = series((i,dt)=>{ let d=Math.abs(frames[i+1].m.shoulderLine-frames[i].m.shoulderLine); if(d>90)d=180-d; return d/dt; });
+  const wrS  = series((i,dt)=>{ const dx=frames[i+1].m.wristX-frames[i].m.wristX, dy=frames[i+1].m.wristY-frames[i].m.wristY; return Math.sqrt(dx*dx+dy*dy)/dt; });
+  const n = hipS.length;
+  const W=1000,H=140,PADX=10;
+  const toPath = arr => arr.map((v,i)=>{
+    const x = PADX + (i/(n-1))*(W-2*PADX);
+    const y = H - (v/100)*H;
+    return (i===0?'M':'L')+x.toFixed(1)+','+y.toFixed(1);
+  }).join(' ');
+  const card = document.createElement('div');
+  card.className = 'chart-card';
+  card.innerHTML = `
+    <div class="chart-head">
+      <div class="name">Kinetic Chain -- Hip / Shoulder / Arm Speed (each normalized to its own peak)</div>
+      <div class="range">peak order &amp; gaps above</div>
+    </div>
+    <svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+      <path d="${toPath(hipS)}" fill="none" stroke="#FFFFFF" stroke-width="2.5"/>
+      <path d="${toPath(shS)}" fill="none" stroke="#D6A94F" stroke-width="2.5"/>
+      <path d="${toPath(wrS)}" fill="none" stroke="#5FB8D6" stroke-width="2.5"/>
+    </svg>
+    <div class="legend">
+      <span><i class="dot" style="background:#FFFFFF"></i>Hips</span>
+      <span><i class="dot" style="background:#D6A94F"></i>Shoulders</span>
+      <span><i class="dot" style="background:#5FB8D6"></i>Arm (wrist speed)</span>
+    </div>
+  `;
+  host.appendChild(card);
+}
+
+// ---- Compare viewer ----
+let cmpMode = 'side';
+let cmpState = null;
+let cmpCurrentR = 0;
+let cmpPlaying = false, cmpPlayRaf = null;
+
+function nearestFrame(clip, t){
+  let best=clip.frames[0], bestDiff=Infinity;
+  for (const f of clip.frames){ const d=Math.abs(f.t-t); if (d<bestDiff){bestDiff=d;best=f;} }
+  return best;
+}
+function drawCompareFrame(tA, tB){
+  const fA = nearestFrame(clipA, tA);
+  const fB = clipB.loaded ? nearestFrame(clipB, tB) : null;
+  const Wa=cmpOverlayA.width, Ha=cmpOverlayA.height;
+  cmpCtxA.clearRect(0,0,Wa,Ha);
+  if (fA) drawSkeletonAt(cmpCtxA, lmToPx(fA.lm,Wa,Ha), '#FFFFFF', 0.85, Math.max(2,Wa*0.004), Math.max(3,Wa*0.006));
+  if (cmpMode==='side'){
+    const Wb=cmpOverlayB.width, Hb=cmpOverlayB.height;
+    cmpCtxB.clearRect(0,0,Wb,Hb);
+    if (fB) drawSkeletonAt(cmpCtxB, lmToPx(fB.lm,Wb,Hb), '#5FB8D6', 0.85, Math.max(2,Wb*0.004), Math.max(3,Wb*0.006));
+  } else if (fA && fB){
+    const hipA = {x:(fA.m.lhipX+fA.m.rhipX)/2*Wa, y:(fA.m.lhipY+fA.m.rhipY)/2*Ha};
+    const shA  = {x:(fA.m.lshX +fA.m.rshX )/2*Wa, y:(fA.m.lshY +fA.m.rshY )/2*Ha};
+    const torsoA = Math.hypot(shA.x-hipA.x, shA.y-hipA.y) || 1;
+    const hipB = {x:(fB.m.lhipX+fB.m.rhipX)/2*Wa, y:(fB.m.lhipY+fB.m.rhipY)/2*Ha};
+    const shB  = {x:(fB.m.lshX +fB.m.rshX )/2*Wa, y:(fB.m.lshY +fB.m.rshY )/2*Ha};
+    const torsoB = Math.hypot(shB.x-hipB.x, shB.y-hipB.y) || 1;
+    const scale = torsoA/torsoB;
+    const bPx = lmToPx(fB.lm, Wa, Ha);
+    const transformed = bPx.map(p => ({ x: hipA.x + (p.x-hipB.x)*scale, y: hipA.y + (p.y-hipB.y)*scale }));
+    drawSkeletonAt(cmpCtxA, transformed, '#5FB8D6', 0.75, Math.max(2,Wa*0.004), Math.max(3,Wa*0.006));
+  }
+}
+function seekCompareRel(r){
+  if (!cmpState) return;
+  const { rMin, rMax, strikeTA, strikeTB, durA, durB } = cmpState;
+  r = Math.max(rMin, Math.min(rMax, r));
+  cmpCurrentR = r;
+  const tA = Math.max(0, Math.min(durA, strikeTA+r));
+  const tB = Math.max(0, Math.min(durB, strikeTB+r));
+  cmpVideoA.currentTime = tA;
+  if (clipB.loaded) cmpVideoB.currentTime = tB;
+  cmpTimeLabel.textContent = (r>=0?'+':'') + Math.round(r*1000) + 'ms';
+  cmpScrub.value = Math.round(((r-rMin)/((rMax-rMin)||1))*1000);
+  drawCompareFrame(tA, tB);
+}
+function initCompareViewer(){
+  stopComparePlay();
+  if (!(clipA.analyzed && clipB.loaded && clipB.analyzed)){ compareSection.style.display='none'; return; }
+  compareSection.style.display = 'block';
+  if (cmpVideoA.src !== clipA.url) { cmpVideoA.src = clipA.url; cmpVideoA.load(); }
+  if (cmpVideoB.src !== clipB.url) { cmpVideoB.src = clipB.url; cmpVideoB.load(); }
+  const evA = getEvents(clipA), evB = getEvents(clipB);
+  const strikeTA = clipA.frames[evA.strikeIdx].t, strikeTB = clipB.frames[evB.strikeIdx].t;
+
+  const ready = () => {
+    if (!cmpVideoA.duration || !cmpVideoB.duration) return;
+    const durA = cmpVideoA.duration, durB = cmpVideoB.duration;
+    const rMin = Math.max(-strikeTA, -strikeTB);
+    const rMax = Math.min(durA-strikeTA, durB-strikeTB);
+    cmpState = { rMin, rMax, strikeTA, strikeTB, durA, durB };
+    resizeCanvasTo(cmpOverlayA, cmpVideoA);
+    resizeCanvasTo(cmpOverlayB, cmpVideoB);
+    seekCompareRel(0);
+  };
+  cmpVideoA.onloadedmetadata = ready;
+  cmpVideoB.onloadedmetadata = ready;
+  if (cmpVideoA.readyState>=1 && cmpVideoB.readyState>=1) ready();
+}
+cmpScrub.oninput = () => {
+  if (!cmpState) return;
+  const frac = cmpScrub.value/1000;
+  seekCompareRel(cmpState.rMin + frac*(cmpState.rMax-cmpState.rMin));
+};
+function stopComparePlay(){
+  cmpPlaying = false; cmpPlayBtn.textContent = 'Play both';
+  if (cmpPlayRaf) cancelAnimationFrame(cmpPlayRaf);
+}
+cmpPlayBtn.onclick = () => {
+  if (!cmpState) return;
+  if (cmpPlaying){ stopComparePlay(); return; }
+  cmpPlaying = true; cmpPlayBtn.textContent = 'Pause';
+  const startWall = performance.now();
+  const startR = cmpCurrentR >= cmpState.rMax ? cmpState.rMin : cmpCurrentR;
+  let lastSeekWall = 0;
+  function step(){
+    if (!cmpPlaying) return;
+    const nowWall = performance.now();
+    if (nowWall-lastSeekWall >= 90){
+      const elapsed = (nowWall-startWall)/1000;
+      const r = startR + elapsed;
+      if (r > cmpState.rMax){ stopComparePlay(); return; }
+      seekCompareRel(r);
+      lastSeekWall = nowWall;
+    }
+    cmpPlayRaf = requestAnimationFrame(step);
+  }
+  cmpPlayRaf = requestAnimationFrame(step);
+};
+modeSideBySide.onclick = () => {
+  cmpMode='side'; modeSideBySide.classList.add('active'); modeOverlay.classList.remove('active');
+  compareStageRow.classList.remove('overlay-mode');
+  if (cmpState) seekCompareRel(cmpCurrentR);
+};
+modeOverlay.onclick = () => {
+  cmpMode='overlay'; modeOverlay.classList.add('active'); modeSideBySide.classList.remove('active');
+  compareStageRow.classList.add('overlay-mode');
+  if (cmpState) seekCompareRel(cmpCurrentR);
+};
+
+// ---- Checklist ----
+const CHECKLIST_ITEMS = [
+  { key:'balance', q:'Balance point', hint:'Controlled pause at the top of leg lift, or rushed through it?' },
+  { key:'armtime', q:'Arm timing', hint:'Is the throwing arm up and ready by foot strike, or dragging late?' },
+  { key:'frontfoot', q:'Front foot landing', hint:'Landing closed, straight, or open?' },
+  { key:'separation', q:'Hip-shoulder separation', hint:'Do the hips visibly open before the shoulders, or does it all rotate together?' },
+  { key:'head', q:'Head stability', hint:'Still and over the back hip through release, or drifting or flying open?' },
+  { key:'legblock', q:'Front leg at landing', hint:'Firm block, or soft and collapsing?' },
+  { key:'finish', q:'Release and follow-through', hint:'Full extension and finish, or short-armed and cut off?' },
+  { key:'rhythm', q:'Overall rhythm', hint:'Smooth and connected, or rushed and disjointed?' }
+];
+const checklistState = {};
+function buildChecklist(){
+  checklistHost.innerHTML = '';
+  CHECKLIST_ITEMS.forEach(item=>{
+    const row = document.createElement('div');
+    row.className = 'cl-row';
+    row.innerHTML = `
+      <div class="cl-q">${item.q}<span class="cl-hint">${item.hint}</span></div>
+      <div class="cl-opts">
+        <button class="cl-opt good" data-val="good" type="button">Good</button>
+        <button class="cl-opt needs" data-val="needs" type="button">Needs work</button>
+        <button class="cl-opt unsure" data-val="unsure" type="button">Not sure</button>
+      </div>
+    `;
+    row.querySelectorAll('.cl-opt').forEach(btn=>{
+      btn.onclick = () => {
+        checklistState[item.key] = btn.getAttribute('data-val');
+        row.querySelectorAll('.cl-opt').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+      };
+    });
+    checklistHost.appendChild(row);
+  });
+  const notesRow = document.createElement('div');
+  notesRow.className = 'notes-row';
+  notesRow.innerHTML = `<textarea id="checklistNotes" placeholder="Anything else you noticed…"></textarea>`;
+  checklistHost.appendChild(notesRow);
+}
+copyChecklistBtn.onclick = () => {
+  const lines = ['Delivery Room -- checklist summary', ''];
+  if (clipA.analyzed){
+    const t = tempoStats(clipA);
+    lines.push(`Tempo -- lift to strike: ${Math.round(t.liftToStrike)}ms, strike to release: ${Math.round(t.strikeToRelease)}ms, total: ${Math.round(t.total)}ms`);
+    lines.push('');
+  }
+  CHECKLIST_ITEMS.forEach(item=>{
+    lines.push(`${item.q}: ${checklistState[item.key] || 'not answered'}`);
+  });
+  const notes = $('checklistNotes');
+  if (notes && notes.value.trim()){ lines.push(''); lines.push('Notes: '+notes.value.trim()); }
+  navigator.clipboard.writeText(lines.join('\n')).then(()=>{
+    copyStatus.textContent = 'Copied!';
+    setTimeout(()=>{ copyStatus.textContent=''; }, 2000);
+  }).catch(()=>{ copyStatus.textContent = 'Could not copy automatically -- select the text manually.'; });
+};
+
+// ---- Log & history (localStorage, works with or without video) ----
+const SESSIONS_KEY = 'deliveryRoomSessions';
+function loadSessions(){
+  try{ const v = JSON.parse(localStorage.getItem(SESSIONS_KEY) || '[]'); return Array.isArray(v) ? v : []; }
+  catch(e){ return []; }
+}
+function saveSessions(list){
+  try{ localStorage.setItem(SESSIONS_KEY, JSON.stringify(list)); }catch(e){}
+}
+function todayStr(){ return new Date().toISOString().slice(0,10); }
+function numOrNull(el){ return el.value!=='' ? parseFloat(el.value) : null; }
+
+const logDateEl = $('logDate'), logTypeEl = $('logType'), logPitchCountEl = $('logPitchCount'), logNotesEl = $('logNotes');
+const logDurationEl = $('logDuration'), logRPEEl = $('logRPE'), logSorenessEl = $('logSoreness');
+const logWhoopRecoveryEl = $('logWhoopRecovery'), logWhoopStrainEl = $('logWhoopStrain'), logAgeEl = $('logAge');
+const saveLogBtn = $('saveLogBtn'), logSaveStatus = $('logSaveStatus');
+const saveLogFromResultsBtn = $('saveLogFromResultsBtn');
+logDateEl.value = todayStr();
+
+// ---- WHOOP connect/fetch (talks to the companion Netlify Functions, if deployed) ----
+const WHOOP_CLIENT_ID_KEY = 'deliveryRoomWhoopClientId';
+const whoopStatus = $('whoopStatus');
+const whoopConnectBtn = $('whoopConnectBtn');
+const whoopFetchBtn = $('whoopFetchBtn');
+
+(function handleWhoopRedirectResult(){
+  const params = new URLSearchParams(window.location.search);
+  const whoopParam = params.get('whoop');
+  if (whoopParam === 'connected'){
+    whoopStatus.textContent = 'WHOOP connected. Click "Fetch latest" to pull today\u2019s numbers.';
+  } else if (whoopParam === 'error'){
+    whoopStatus.textContent = 'WHOOP connection failed (' + (params.get('reason')||'unknown') + '). Check the function logs in your Netlify dashboard.';
+  }
+  if (whoopParam){
+    params.delete('whoop'); params.delete('reason');
+    const newUrl = window.location.pathname + (params.toString()?('?'+params.toString()):'');
+    window.history.replaceState({}, '', newUrl);
+  }
+})();
+
+whoopConnectBtn.onclick = () => {
+  let clientId = '';
+  try{ clientId = localStorage.getItem(WHOOP_CLIENT_ID_KEY) || ''; }catch(e){}
+  if (!clientId){
+    clientId = prompt('WHOOP Client ID (from developer.whoop.com -- this part is not secret, safe to enter here):') || '';
+    if (!clientId) return;
+    try{ localStorage.setItem(WHOOP_CLIENT_ID_KEY, clientId); }catch(e){}
+  }
+  const redirectUri = window.location.origin + '/.netlify/functions/whoop-callback';
+  const state = Math.random().toString(36).slice(2);
+  const authUrl = 'https://api.prod.whoop.com/oauth/oauth2/auth?' + new URLSearchParams({
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    response_type: 'code',
+    scope: 'read:cycles read:recovery offline',
+    state
+  }).toString();
+  window.location.href = authUrl;
+};
+
+whoopFetchBtn.onclick = async () => {
+  whoopStatus.textContent = 'Fetching…';
+  try{
+    const res = await fetch('/.netlify/functions/whoop-recovery');
+    if (res.status === 404){
+      whoopStatus.textContent = 'No WHOOP backend deployed on this site -- see netlify/WHOOP-SETUP.md, or just type Recovery/Strain in by hand.';
+      return;
+    }
+    const data = await res.json();
+    if (!res.ok){
+      whoopStatus.textContent = data.error === 'not_connected'
+        ? 'Not connected yet -- click Connect first.'
+        : 'Could not fetch WHOOP data (' + (data.error||res.status) + ').';
+      return;
+    }
+    if (data.recovery_score!=null) logWhoopRecoveryEl.value = data.recovery_score;
+    if (data.strain!=null) logWhoopStrainEl.value = data.strain;
+    whoopStatus.textContent = 'Filled in from WHOOP as of ' + (data.as_of ? new Date(data.as_of).toLocaleDateString() : 'latest cycle') + '.';
+  }catch(err){
+    whoopStatus.textContent = 'No WHOOP backend reachable on this site -- see netlify/WHOOP-SETUP.md, or just type Recovery/Strain in by hand.';
+  }
+};
+
+function summarizeChecklist(cl){
+  const vals = Object.values(cl);
+  const needs = vals.filter(v=>v==='needs').length;
+  return needs ? `${needs} flagged` : 'all good';
+}
+// Session load (sRPE): rate of perceived exertion x duration in minutes. Same
+// formula for a bullpen and a lift, so both land on one comparable scale.
+// Widely used in sports science under this name -- see e.g. Foster et al.,
+// "A new approach to monitoring exercise training," J Strength Cond Res, 2001.
+function srpeLoad(entry){
+  if (entry.durationMin==null || entry.rpe==null) return null;
+  return entry.durationMin * entry.rpe;
+}
+function saveLogEntry(){
+  const entry = {
+    id: 'log_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+    date: logDateEl.value || todayStr(),
+    sessionType: logTypeEl.value,
+    pitchCount: numOrNull(logPitchCountEl),
+    durationMin: numOrNull(logDurationEl),
+    rpe: numOrNull(logRPEEl),
+    soreness: numOrNull(logSorenessEl),
+    whoopRecovery: numOrNull(logWhoopRecoveryEl),
+    whoopStrain: numOrNull(logWhoopStrainEl),
+    age: numOrNull(logAgeEl),
+    notes: logNotesEl.value.trim() || null,
+    tempo: clipA.analyzed ? tempoStats(clipA) : null,
+    chain: clipA.analyzed ? computeKineticChain(clipA, getEvents(clipA)) : null,
+    checklist: Object.keys(checklistState).length ? Object.assign({}, checklistState) : null
+  };
+  const list = loadSessions();
+  list.push(entry);
+  saveSessions(list);
+  renderHistory();
+  return entry;
+}
+saveLogBtn.onclick = () => {
+  saveLogEntry();
+  logSaveStatus.textContent = 'Saved.';
+  [logPitchCountEl,logDurationEl,logRPEEl,logSorenessEl,logWhoopRecoveryEl,logWhoopStrainEl,logNotesEl].forEach(el=>el.value='');
+  setTimeout(()=>{ logSaveStatus.textContent=''; }, 2500);
+};
+saveLogFromResultsBtn.onclick = () => {
+  saveLogEntry();
+  copyStatus.textContent = 'Saved to your log.';
+  setTimeout(()=>{ copyStatus.textContent=''; }, 2500);
+};
+
+function withinDays(dateStr, days){
+  const d = new Date(dateStr+'T00:00:00');
+  const now = new Date(todayStr()+'T00:00:00');
+  const diff = (now-d)/(1000*60*60*24);
+  return diff>=0 && diff<=days;
+}
+function renderWorkload(list){
+  const host = $('workloadHost');
+  const withCounts = list.filter(e=>e.pitchCount!=null);
+  if (!withCounts.length){ host.innerHTML=''; return; }
+  const last7 = withCounts.filter(e=>withinDays(e.date,7)).reduce((s,e)=>s+e.pitchCount,0);
+  const last30 = withCounts.filter(e=>withinDays(e.date,30)).reduce((s,e)=>s+e.pitchCount,0);
+  const days7 = new Set(withCounts.filter(e=>withinDays(e.date,7)).map(e=>e.date)).size;
+  host.innerHTML = `<div class="tempo-card">
+    <div class="tc-label">Throw volume</div>
+    <div class="tc-row"><span class="tc-name">Last 7 days</span><span class="tc-val">${last7} throws · ${days7} day${days7!==1?'s':''} logged</span></div>
+    <div class="tc-row"><span class="tc-name">Last 30 days</span><span class="tc-val">${last30} throws</span></div>
+  </div>`;
+}
+// Acute:chronic workload ratio -- acute = last 7 days of session load (sRPE),
+// chronic = average weekly load over the last 28 days. A widely-used sports-
+// science heuristic (Gabbett and others): roughly 0.8-1.3 is described as a
+// lower-risk "sweet spot," >1.5 as a commonly-flagged elevated-risk zone.
+// Worth saying plainly: this predicts injury risk at a population level in
+// research, not for any one person -- some studies have also failed to
+// replicate the effect, and individual tolerance varies a lot. Read it as a
+// rough flag worth a second look, not a verdict.
+function computeACWR(list){
+  const withLoad = list.map(e=>({date:e.date, load:srpeLoad(e)})).filter(e=>e.load!=null);
+  if (!withLoad.length) return null;
+  function sumWithin(days){
+    return withLoad.filter(e=>withinDays(e.date,days)).reduce((s,e)=>s+e.load,0);
+  }
+  const acute7 = sumWithin(7);
+  const chronic28 = sumWithin(28);
+  const chronicWeekly = chronic28/4;
+  const ratio = chronicWeekly>0 ? acute7/chronicWeekly : null;
+  return { acute7, chronic28, chronicWeekly, ratio, sampleCount: withLoad.length };
+}
+function acwrZoneLabel(ratio){
+  if (ratio==null) return { label:'—', cls:'' };
+  if (ratio<0.8) return { label:'below typical range', cls:'faster' };
+  if (ratio<=1.3) return { label:'typical range', cls:'' };
+  if (ratio<=1.5) return { label:'moderately elevated', cls:'slower' };
+  return { label:'elevated', cls:'slower' };
+}
+function renderACWR(list){
+  const host = $('acwrHost');
+  const acwr = computeACWR(list);
+  if (!acwr || acwr.sampleCount<3){ host.innerHTML=''; return; }
+  const zone = acwrZoneLabel(acwr.ratio);
+  host.innerHTML = `<div class="tempo-card diff">
+    <div class="tc-label">Combined load (throwing + lifting, via RPE × duration)</div>
+    <div class="tc-row"><span class="tc-name">Last 7 days (acute)</span><span class="tc-val">${Math.round(acwr.acute7)}</span></div>
+    <div class="tc-row"><span class="tc-name">4-week average weekly (chronic)</span><span class="tc-val">${Math.round(acwr.chronicWeekly)}</span></div>
+    <div class="tc-row"><span class="tc-name">Ratio</span><span class="tc-val ${zone.cls}">${acwr.ratio!=null ? acwr.ratio.toFixed(2) : '—'} (${zone.label})</span></div>
+  </div>
+  <div class="log-save-note" style="margin-top:6px;">Reference only: research on the acute:chronic workload ratio (Gabbett and others) describes roughly 0.8–1.3 as a lower-risk range and above 1.5 as commonly flagged for elevated risk, at a population level. It doesn't predict any one person's risk reliably, and some studies haven't replicated the effect -- treat a number outside 0.8–1.3 as worth a second look, not a diagnosis.</div>`;
+}
+function renderTempoTrend(list){
+  const host = $('tempoTrendHost');
+  const withTempo = list.filter(e=>e.tempo).sort((a,b)=>a.date.localeCompare(b.date) || a.id.localeCompare(b.id));
+  if (withTempo.length<2){ host.innerHTML=''; return; }
+  const vals = withTempo.map(e=>e.tempo.total);
+  const min=Math.min(...vals), max=Math.max(...vals);
+  const pad=(max-min)*0.15||5, lo=min-pad, hi=max+pad;
+  const W=1000,H=100,PADX=10;
+  const pts = vals.map((v,i)=>{ const x=PADX+(i/(vals.length-1))*(W-2*PADX); const y=H-((v-lo)/(hi-lo))*H; return [x,y]; });
+  const path = pts.map((p,i)=>(i===0?'M':'L')+p[0].toFixed(1)+','+p[1].toFixed(1)).join(' ');
+  host.innerHTML = `<div class="chart-card" style="margin-top:12px;">
+    <div class="chart-head"><div class="name">Total delivery tempo across logged sessions</div><div class="range">${Math.round(min)}–${Math.round(max)}ms</div></div>
+    <svg class="chart" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none"><path d="${path}" fill="none" stroke="#FFFFFF" stroke-width="2.5"/></svg>
+  </div>`;
+}
+// Pitch Smart (MLB / USA Baseball, developed with ASMI) age-based daily pitch
+// limits and required rest, ages 7-18. Source: MLB.com/pitchsmart.
+const PITCH_SMART = [
+  { minAge:7,  maxAge:8,  dailyMax:50,  rest:[[1,20,0],[21,35,1],[36,50,2]] },
+  { minAge:9,  maxAge:10, dailyMax:75,  rest:[[1,20,0],[21,35,1],[36,50,2],[51,65,3],[66,999,4]] },
+  { minAge:11, maxAge:12, dailyMax:85,  rest:[[1,20,0],[21,35,1],[36,50,2],[51,65,3],[66,999,4]] },
+  { minAge:13, maxAge:14, dailyMax:95,  rest:[[1,20,0],[21,35,1],[36,50,2],[51,65,3],[66,999,4]] },
+  { minAge:15, maxAge:16, dailyMax:95,  rest:[[1,30,0],[31,45,1],[46,60,2],[61,80,3],[81,999,4]] },
+  { minAge:17, maxAge:18, dailyMax:105, rest:[[1,30,0],[31,45,1],[46,60,2],[61,80,3],[81,999,4]] }
+];
+function pitchSmartBracket(age){
+  return PITCH_SMART.find(b=>age>=b.minAge && age<=b.maxAge) || null;
+}
+function restDaysFor(bracket, pitches){
+  const row = bracket.rest.find(r=>pitches>=r[0] && pitches<=r[1]);
+  return row ? row[2] : bracket.rest[bracket.rest.length-1][2];
+}
+function renderPitchSmart(list){
+  const host = $('pitchSmartHost');
+  const rows = PITCH_SMART.map(b=>`<div class="tc-row"><span class="tc-name">Ages ${b.minAge}-${b.maxAge}</span><span class="tc-val">${b.dailyMax} max/day</span></div>`).join('');
+  let flagHtml = '';
+  const recentWithAge = list.filter(e=>e.age!=null && e.pitchCount!=null).sort((a,b)=>b.date.localeCompare(a.date));
+  if (recentWithAge.length){
+    const latest = recentWithAge[0];
+    const bracket = pitchSmartBracket(latest.age);
+    if (bracket){
+      const rest = restDaysFor(bracket, latest.pitchCount);
+      const overMax = latest.pitchCount > bracket.dailyMax;
+      flagHtml = `<div class="log-save-note" style="margin-top:8px;">Most recent logged age/throw count (${latest.date}, age ${latest.age}, ${latest.pitchCount} throws): ${overMax ? 'above the '+bracket.dailyMax+'-pitch daily max for that age bracket.' : rest+' day'+(rest!==1?'s':'')+' of rest recommended before pitching again per this bracket.'}</div>`;
+    }
+  }
+  host.innerHTML = `<div class="tempo-card">
+    <div class="tc-label">Pitch Smart daily max reference (MLB / USA Baseball, ages 7-18)</div>
+    ${rows}
+  </div>${flagHtml}`;
+}
+function renderHistory(){
+  const list = loadSessions();
+  renderWorkload(list);
+  renderACWR(list);
+  renderTempoTrend(list);
+  renderPitchSmart(list);
+  const host = $('historyHost');
+  if (!list.length){ host.innerHTML = '<p class="log-empty">No sessions logged yet.</p>'; return; }
+  const sorted = list.slice().sort((a,b)=> b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
+  host.innerHTML = `<div class="log-table">` + sorted.map(e=>{
+    const tempoTxt = e.tempo ? Math.round(e.tempo.total)+'ms' : '—';
+    const chainTxt = e.chain ? (e.chain.orderOk ? 'sequenced' : 'compressed') : '—';
+    const clTxt = e.checklist ? summarizeChecklist(e.checklist) : '—';
+    const pitchTxt = e.pitchCount!=null ? e.pitchCount+' thr' : '—';
+    const load = srpeLoad(e);
+    const loadTxt = load!=null ? Math.round(load) : '—';
+    return `<div class="log-row">
+      <span class="log-date">${e.date}</span>
+      <span>${e.sessionType||''}</span>
+      <span>${pitchTxt}</span>
+      <span>${loadTxt}</span>
+      <span>${tempoTxt}</span>
+      <span>${chainTxt}</span>
+      <span>${clTxt}</span>
+      <button class="log-del" data-id="${e.id}" type="button" title="Delete">×</button>
+    </div>`;
+  }).join('') + `</div>`;
+  host.querySelectorAll('.log-del').forEach(btn=>{
+    btn.onclick = () => {
+      const list2 = loadSessions().filter(e=>e.id!==btn.getAttribute('data-id'));
+      saveSessions(list2);
+      renderHistory();
+    };
+  });
+}
+
+$('downloadBackupBtn').onclick = () => {
+  const data = JSON.stringify(loadSessions(), null, 2);
+  const blob = new Blob([data], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'delivery-room-log-' + todayStr() + '.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+};
+const restoreFileInput = $('restoreFileInput');
+$('restoreBackupBtn').onclick = () => restoreFileInput.click();
+restoreFileInput.onchange = () => {
+  const file = restoreFileInput.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const parsed = JSON.parse(reader.result);
+      if (!Array.isArray(parsed)) throw new Error('not an array');
+      const existing = loadSessions();
+      const existingIds = new Set(existing.map(e=>e.id));
+      const merged = existing.concat(parsed.filter(e=>e && e.id && !existingIds.has(e.id)));
+      saveSessions(merged);
+      renderHistory();
+      $('backupStatus').textContent = 'Restored.';
+    }catch(e){
+      $('backupStatus').textContent = 'Could not read that file.';
+    }
+    setTimeout(()=>{ $('backupStatus').textContent=''; }, 3000);
+  };
+  reader.readAsText(file);
+};
+renderHistory();
+
+// ---- Drills reference (browsable, not gated behind any computed score) ----
+const DRILL_REF = [
+  { cat:'Arm timing', title:'Pivot Picks', org:'Driveline Baseball -- Plyocare routine', text:'A standing plyo-ball constraint drill built to groove arm-path timing so the throwing arm gets up on time by foot strike.' },
+  { cat:'Arm timing', title:'Reverse Throws', org:'Driveline Baseball -- Plyocare routine', text:'Sub-max, seamless weighted-ball throws that groove a cleaner arm path into layback before the arm ever touches a regular ball.' },
+  { cat:'Hip-shoulder separation', title:'Roll-In Drill', org:'RPP Baseball (Rockland Peak Performance)', text:'A connection-ball style constraint drill that trains the hips to open ahead of the shoulders instead of rotating together.' },
+  { cat:'Hip-shoulder separation', title:'Rotational Medicine Ball Throws', org:'TopVelocity / rotational-power coaching', text:'A loaded med-ball throw that exaggerates hips-then-shoulders firing order so the body relearns the sequence at speed.' },
+  { cat:'Front foot landing / leg block', title:'Front Leg Block Drill', org:'RP Performance pitching program', text:'Start from the stride position and shift weight onto a firm, blocking front leg without letting the knee collapse.' },
+  { cat:'Front foot landing / leg block', title:'Rope / Chalk-Line Stride Drill', org:'common in college and pro stride-training progressions', text:'A rope or chalk line set roughly three-quarters through the stride, training reaching further out front without rushing.' },
+  { cat:'Balance point / head stability', title:'Balance Point Hold', org:'standard in amateur and pro pitcher conditioning', text:'Hold the leg-lift balance position for two seconds before striding, keeping the head still and stacked over the back hip.' },
+  { cat:'Release and follow-through', title:'Towel Drill', org:'widely used at the college and pro level', text:'The same pitching motion with a hand towel instead of a ball, snapping it at a target to groove full extension and finish.' }
+];
+function buildDrillRef(){
+  drillRefHost.innerHTML = '';
+  DRILL_REF.forEach(d=>{
+    const card = document.createElement('div'); card.className='drill-ref-card';
+    card.innerHTML = `<div class="dr-cat">${d.cat}</div><div class="dr-title">${d.title}</div><div class="dr-org">${d.org}</div><p>${d.text}</p>`;
+    drillRefHost.appendChild(card);
+  });
+}
+
+// ---- Orchestration ----
+function renderResultsUI(){
+  buildTempo();
+  buildChainSection();
+  renderEventControls();
+  initCompareViewer();
+}
+function buildResults(){
+  buildChecklist();
+  buildDrillRef();
+  renderResultsUI();
+  resultsEl.style.display = 'block';
+  resultsEl.scrollIntoView({behavior:'smooth', block:'start'});
+}
+
+// ---- AI summary (direct browser call to the Anthropic API, user's own key) ----
+const apiKeyInput = $('apiKeyInput');
+const generateAiBtn = $('generateAiBtn');
+const aiStatus = $('aiStatus');
+const aiOutput = $('aiOutput');
+const API_KEY_STORAGE = 'deliveryRoomApiKey';
+try{
+  const savedKey = localStorage.getItem(API_KEY_STORAGE);
+  if (savedKey) apiKeyInput.value = savedKey;
+}catch(e){}
+apiKeyInput.onchange = () => {
+  try{ localStorage.setItem(API_KEY_STORAGE, apiKeyInput.value.trim()); }catch(e){}
+};
+
+function buildAiPrompt(){
+  const lines = [];
+  if (clipA.analyzed){
+    const t = tempoStats(clipA);
+    lines.push(`Tempo -- leg lift to foot strike: ${Math.round(t.liftToStrike)}ms, foot strike to release: ${Math.round(t.strikeToRelease)}ms, total: ${Math.round(t.total)}ms.`);
+    const kc = computeKineticChain(clipA, getEvents(clipA));
+    if (kc){
+      lines.push(`Kinetic chain -- hips to shoulders gap: ${Math.round(kc.gapHipSh)}ms, shoulders to arm gap: ${Math.round(kc.gapShWr)}ms, peaks in expected proximal-to-distal order: ${kc.orderOk ? 'yes' : 'no'}.`);
+    }
+  }
+  if (clipB.loaded && clipB.analyzed){
+    const tb = tempoStats(clipB);
+    lines.push(`Compare clip tempo -- leg lift to foot strike: ${Math.round(tb.liftToStrike)}ms, foot strike to release: ${Math.round(tb.strikeToRelease)}ms, total: ${Math.round(tb.total)}ms.`);
+  }
+  const answered = CHECKLIST_ITEMS.filter(item => checklistState[item.key]);
+  if (answered.length){
+    lines.push('Self-assessment checklist:');
+    answered.forEach(item => lines.push(`- ${item.q}: ${checklistState[item.key]}`));
+  }
+  const notes = $('checklistNotes');
+  if (notes && notes.value.trim()) lines.push('Pitcher notes: ' + notes.value.trim());
+  return lines.join('\n');
+}
+
+generateAiBtn.onclick = async () => {
+  const apiKey = apiKeyInput.value.trim();
+  if (!apiKey){
+    aiStatus.textContent = 'Enter your API key above first.';
+    return;
+  }
+  if (!clipA.analyzed){
+    aiStatus.textContent = 'Analyze a clip first.';
+    return;
+  }
+  try{ localStorage.setItem(API_KEY_STORAGE, apiKey); }catch(e){}
+  const dataSummary = buildAiPrompt();
+  aiStatus.textContent = 'Asking Claude…';
+  generateAiBtn.disabled = true;
+  aiOutput.classList.remove('placeholder');
+  aiOutput.textContent = '';
+  try{
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: `You are a pitching coach reading a data summary from a video analysis tool, not a biomechanics lab. The tool deliberately does not measure joint angles from a single camera, since that is not reliable; it only measures timing (tempo and kinetic-chain sequencing) plus the pitcher's own qualitative checklist self-assessment. Write a short (4-6 sentence) plain-language summary that connects these data points into an actual narrative -- what they likely mean together, and which one thing is most worth prioritizing. Do not invent numbers, joint angles, or claims beyond what is given below. If the data is thin, say so rather than filling in gaps.
+
+${dataSummary}`
+        }]
+      })
+    });
+    if (!response.ok){
+      const errBody = await response.json().catch(()=>({}));
+      const msg = errBody && errBody.error && errBody.error.message ? errBody.error.message : `HTTP ${response.status}`;
+      throw new Error(msg);
+    }
+    const data = await response.json();
+    const text = (data.content || []).map(b => b.type==='text' ? b.text : '').join('\n').trim();
+    aiOutput.textContent = text || 'Claude returned an empty response -- try again.';
+    aiStatus.textContent = '';
+  }catch(err){
+    aiOutput.classList.add('placeholder');
+    aiOutput.textContent = 'Could not generate a summary.';
+    aiStatus.textContent = (err && err.message) ? err.message : 'Request failed.';
+    console.error(err);
+  }finally{
+    generateAiBtn.disabled = false;
+  }
+};
+
+wireDropzone(clipA); wireHandedness(clipA); wireTransport(clipA);
+wireDropzone(clipB); wireHandedness(clipB); wireTransport(clipB);
+</script>
+</body>
+</html>
